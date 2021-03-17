@@ -21,19 +21,18 @@ def create_app(test_config=None):
 
     @app.route('/categories')
     def get_categories():
-        try:
-            categories = Category.query.all()
-            if len(categories) == 0:
-                abort(404)
-            return jsonify({'success': True, 'categories': {category.id: category.type for category in categories}})
-        except:
-            abort(500)
+        categories = Category.query.all()
+        if len(categories) == 0:
+            abort(404)
+        return jsonify({'success': True, 'categories': {category.id: category.type for category in categories}})
 
     @app.route('/questions')
     def get_questions():
         try:
             questions = Question.query.all()
             categories = Category.query.all()
+            if len(questions) == 0 or len(categories) == 0:
+                abort(404)
             page = request.args.get('page', 1, type=int)
             start = (page - 1) * QUESTIONS_PER_PAGE
             end = start + QUESTIONS_PER_PAGE
@@ -46,7 +45,7 @@ def create_app(test_config=None):
               'questions': questions[start:end],
             }), 200
         except:
-            abort(500)
+            abort(404)
 
     @app.route('/questions/<int:questions_id>', methods=['DELETE'])
     def delete_question(questions_id):
@@ -139,15 +138,19 @@ def create_app(test_config=None):
             return jsonify({'success': True, 'question': next_question.format()}), 200
         except:
             abort(500)
+
     @app.errorhandler(400)
     def bad_request(error):
         return jsonify({'error': '400', 'massage': 'Bad Request', 'success': False}), 400
+
     @app.errorhandler(404)
     def page_not_found(error):
         return jsonify({'error': '404', 'massage': 'Page not found', 'success': False}), 404
+
     @app.errorhandler(422)
     def unprocessable(error):
          return jsonify({'error': '422', 'massage': 'Page not found', 'success': False}), 422
+
     @app.errorhandler(500)
     def server_error(error):
         return jsonify({'error': '500', 'massage': 'Internal Server Error', 'success': False}), 500

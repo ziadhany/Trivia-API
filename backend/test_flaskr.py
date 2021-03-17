@@ -7,6 +7,7 @@ from flaskr import create_app
 from models import setup_db, Question, Category
 
 
+
 class TriviaTestCase(unittest.TestCase):
     """This class represents the trivia test case"""
 
@@ -76,7 +77,8 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['message'], "The Question Created")
 
     def test_create_question_missing(self):
-        response = self.client().post('/questions', json={'question': '', 'answer': '', 'difficulty': 5, 'category': '3'})
+        response = self.client().post('/questions', json={'question': '', 'answer': '', 'difficulty': 5,
+                                                          'category': '3'})
         data = json.loads(response.data)
 
         self.assertEqual(response.status_code, 422)
@@ -85,7 +87,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], False)
 
     def test_search_questions(self):
-        response = self.client().post('/questions/search', json={'searchTerm': 'did',})
+        response = self.client().post('/questions/search', json={'searchTerm': 'did'})
         data = json.loads(response.data)
 
         self.assertEqual(response.status_code, 200)
@@ -113,15 +115,48 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['current_category'])
 
     def test_play_quiz(self):
-        response = self.client().post('/quizzes', json={"previous_questions": [], "quiz_category": {"type": "Science","id":"1"}})
+        response = self.client().post('/quizzes', json={"previous_questions": [], "quiz_category": {"type": "Science",
+                                                                                                    "id": "1"}})
         data = json.loads(response.data)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertTrue(data['question'])
 
+    def test_get_categories_failure(self):
+        Category.query.delete()
+        response = self.client().get('/categories')
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(data['error'], '404')
+        self.assertTrue(data['massage'], 'Page not found')
+        self.assertEqual(data['success'], False)
 
+    def test_get_question_failure(self):
+        Category.query.delete()
+        Question.query.delete()
+        response = self.client().get('/questions?page=1000')
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(data['error'], '404')
+        self.assertTrue(data['massage'], 'Page not found')
+        self.assertEqual(data['success'], False)
 
-# Make the tests conveniently executable
+    def test_delete_question_failure(self):
+        response = self.client().delete('/questions/1000')
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(data['error'], '404')
+        self.assertTrue(data['massage'], 'Page not found')
+        self.assertEqual(data['success'], False)
+    def test_quiz_failure(self):
+        response = self.client().post('/quizzes', json={'previous_questions': [], 'quiz_category': []})
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(data['error'], '500')
+        self.assertTrue(data['massage'], 'Internal Server Error')
+        self.assertEqual(data['success'], False)
+
 if __name__ == "__main__":
     unittest.main()
