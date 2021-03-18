@@ -134,27 +134,22 @@ def create_app(test_config=None):
         data = request.get_json()
         previous_questions = data.get('previous_questions')
         quiz_category = data.get('quiz_category')
+        if quiz_category['id'] == 0:  # all categories
+            questions_by_category = Question.query.filter(Question.id.notin_(previous_questions)).all()
 
-        if quiz_category['id'] == 0:
-            questions = Question.query.all()
-        else:
-            questions = Question.query.filter_by(
-                category=quiz_category['id']).all()
+        else:  # specific category
+            questions_by_category = Question.query. \
+                filter_by(category=quiz_category['id']). \
+                filter(Question.id.notin_(previous_questions)). \
+                all()
 
-        next_question = questions[random.randint(0, len(questions) - 1)]
-
-        while True:
-            if next_question.id in previous_questions:
-                next_question = questions[random.randint(
-                    0, len(questions) - 1)]
-            if len(previous_questions) == len(questions):
+        if len(previous_questions) >= len(questions_by_category):
                 # some categories have less than 5 questions
                 # so we complete the missing questions by random questions
-                questions = Question.query.all()
-                next_question = questions[random.randint(
-                    0, len(questions) - 1)]
-            else:
-                break
+                questions_all = Question.query.all()
+                next_question = questions_all[random.randint(0, len(questions_all) - 1)]
+        else:
+            next_question = questions_by_category[random.randint(0, len(questions_by_category) - 1)]
 
         return jsonify(
             {'success': True, 'question': next_question.format()}), 200
