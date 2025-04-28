@@ -1,7 +1,4 @@
-import json
-import os
 from flask import Flask, request, abort, jsonify
-from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
 from models import setup_db, Question, Category
@@ -174,3 +171,10 @@ def create_app(test_config=None):
         return jsonify(
             {'error': '500', 'massage': 'Internal Server Error', 'success': False}), 500
     return app
+
+
+
+if __name__ == '__main__':
+    app = create_app()
+
+    app.run(debug=True)
